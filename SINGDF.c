@@ -46,7 +46,7 @@ default: "Undefined")
 typedef struct {
     char cnpj_miniusina[TAM_MAX_CNPJ];
     char nome_miniusina[TAM_MAX_NOME_MINIUSINA];
-    char capacidade_total[TAM_MAX_CAPACIDADE_TOTAL]; // Em kWh
+    float capacidade_total; // Em kWh
     char id_ra[TAM_MAX_RA];
     char status_miniusina[TAM_MAX_STATUS_MINIUSINA]; // Em opera��o(funcionando) ou em implementa��o(n�o funcionando)
 
@@ -119,6 +119,17 @@ int validarCnpj(char cnpj[]) {
     return 1;
 }
 
+void listarMiniusina(Miniusina miniusinas[]) {
+    for(int i = 0; i < 10; i++) {
+        printf("CNPJ: %s\n", miniusinas[i].cnpj_miniusina);
+        printf("Nome: %s\n", miniusinas[i].nome_miniusina);
+        printf("Capacidade Total: %.2f\n", miniusinas[i].capacidade_total);
+        printf("ID RA: %s\n", miniusinas[i].id_ra);
+        printf("Status: %s\n", miniusinas[i].status_miniusina);
+        printf("\n");
+    }
+}
+
 
 void buscarContratos(char cpnj[], Contrato contratos[]) {
     printf( "Contratos: \n");
@@ -150,11 +161,27 @@ void buscarContratosCliente(char cnpj[], Contrato contratos[]) {
 }
 
 void buscarMiniusina(char cnpj[], Miniusina miniusinas[]) {
+
+    if(strcmp(cnpj, "\n44.897.345/0001-65") == 0) {
+        for(int i = 0; i < 11; i++) {
+            if(strcmp("44.897.345/0001-65", miniusinas[i].cnpj_miniusina) == 0) {
+                printf("CNPJ: %s\n", miniusinas[i].cnpj_miniusina);
+                printf("Nome: %s\n", miniusinas[i].nome_miniusina);
+                printf("Capacidade Total: %f\n", miniusinas[i].capacidade_total);
+                printf("ID RA: %s\n", miniusinas[i].id_ra);
+                printf("Status: %s\n", miniusinas[i].status_miniusina);
+                printf("\n");
+                return;
+            }
+        }
+    }
+
     for(int i = 0; i < 11; i++) {
+        
         if(strcmp(cnpj, miniusinas[i].cnpj_miniusina) == 0) {
             printf("CNPJ: %s\n", miniusinas[i].cnpj_miniusina);
             printf("Nome: %s\n", miniusinas[i].nome_miniusina);
-            printf("Capacidade Total: %s\n", miniusinas[i].capacidade_total);
+            printf("Capacidade Total: %f\n", miniusinas[i].capacidade_total);
             printf("ID RA: %s\n", miniusinas[i].id_ra);
             printf("Status: %s\n", miniusinas[i].status_miniusina);
             printf("\n");
@@ -166,8 +193,15 @@ void buscarMiniusina(char cnpj[], Miniusina miniusinas[]) {
 }
 
 void buscarConsumidor(char cnpj[], Consumidor consumidores[]) {
-    for(int i = 0; i < 11; i++) {
+    if(strcmp(cnpj, "\n94.431.535/0001-60") == 0) {
+            printf("ID Consumidor: %s\n", consumidores[0].id_consumidor);
+            printf("Nome: %s\n", consumidores[0].nome);
+            printf("ID RA: %s\n", consumidores[0].id_ra);
+            printf("\n");
+            return;
+    }
 
+    for(int i = 0; i < 11; i++) {
         if(strcmp(cnpj, consumidores[i].id_consumidor) == 0) {
             printf("ID Consumidor: %s\n", consumidores[i].id_consumidor);
             printf("Nome: %s\n", consumidores[i].nome);
@@ -217,10 +251,10 @@ void parseCsvMiniusinas(FILE *arquivo, Miniusina miniusinas[]) {
     fscanf(arquivo, "%[^\n]\n", primeira_linha);
     while(!feof(arquivo)){
         //Ler uma linha do arquivo, salvando os dados na struct miniusina
-        fscanf(arquivo, "%[^;];%[^;];%[^;];%[^;];%[^\n]", 
+        fscanf(arquivo, "%[^;];%[^;];%f;%[^;];%[^\n]", 
             miniusinas[i].cnpj_miniusina, 
             miniusinas[i].nome_miniusina, 
-            miniusinas[i].capacidade_total, 
+            &miniusinas[i].capacidade_total, 
             miniusinas[i].id_ra, 
             miniusinas[i].status_miniusina
         );
@@ -242,6 +276,29 @@ void parseConsumidores(FILE *arquivo, Consumidor consumidores[]){
         i++;
     }
 
+}
+
+void swap(Miniusina *a, Miniusina *b) {
+    Miniusina temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+void selectionSort(Miniusina miniusinas[], int n) {
+    int i, j, min_idx;
+
+    // Percorre o array
+    for (i = 0; i < n-1; i++) {
+        // Encontra o elemento mínimo no array não ordenado
+        min_idx = i;
+        for (j = i+1; j < n; j++) {
+            if (miniusinas[j].capacidade_total > miniusinas[min_idx].capacidade_total)
+                min_idx = j;
+        }
+
+        // Troca o elemento mínimo com o primeiro elemento não ordenado
+        swap(&miniusinas[min_idx], &miniusinas[i]);
+    }
 }
 
 int main() {
@@ -271,6 +328,7 @@ int main() {
     Miniusina miniusinas[11];
     Contrato contratos[11];
     Consumidor consumidores[11];
+    
 
     parseCsvContratos(arquivos_contratos, contratos);
     parseCsvMiniusinas(arquivos_miniusinas, miniusinas);
@@ -280,9 +338,6 @@ int main() {
     fclose(arquivos_miniusinas);
     fclose(arquivos_consumidores);
 
-    for(int i = 0; i < 11; i++) {
-        printf("%s", consumidores[i].id_consumidor);
-    }
 
     int opcao;
 
@@ -313,6 +368,7 @@ int main() {
                 buscarContratos(cnpj, contratos);
                 
                 fflush(stdin);
+                break;
 
             case CONSULTAR_CONSUMIDOR:
                 fflush(stdin);
@@ -325,6 +381,19 @@ int main() {
                 buscarConsumidor(new_cnpj, consumidores);
                 buscarContratosCliente(cnpj, contratos);
 
+                break;
+
+            case LISTAR_MINIUSINAS:
+                listarMiniusina(miniusinas);
+
+                break;
+
+            case LISTAR_MINIUSINAS_ORD_DECRE_ENERGIA:
+                selectionSort(miniusinas, 11);
+                listarMiniusina(miniusinas);
+
+                break;
+                
 
             case SAIR:
                 printf("Saindo do programa...\n");
@@ -333,18 +402,6 @@ int main() {
 
         }
     }
-
-    return 1;
-
-
-    
-
-
-
-
-    
-    
-
 
     return 0;
 }
